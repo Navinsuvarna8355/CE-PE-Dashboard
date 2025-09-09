@@ -1,15 +1,13 @@
 # app.py
 
-import requests
+import streamlit as st
 import pandas as pd
 import numpy as np
-import json
-from datetime import datetime, timedelta
-import plotly.graph_objs as go
-import dash
-from dash import dcc, html
-from dash.dependencies import Input, Output, State
-import dash_bootstrap_components as dbc
+import requests
+import plotly.graph_objects as go
+from ta.momentum import RSIIndicator
+from ta.trend import MACD
+
 
 # For calculating RSI and MACD
 import ta
