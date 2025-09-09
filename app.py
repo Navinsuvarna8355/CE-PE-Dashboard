@@ -52,6 +52,20 @@ def generate_alerts(row):
     else:
         return ""
 
+def generate_recommendation(row):
+    if row["Bias"] == "CE" and row["RSI"] < 30:
+        return "Sell CE, RSI oversold — risky"
+    elif row["Bias"] == "PE" and row["RSI"] > 70:
+        return "Sell PE, RSI overbought — reversal likely"
+    elif row["Bias"] == "None":
+        return "Iron Condor setup — low decay"
+    elif row["MACD"] > 0 and row["Bias"] == "CE":
+        return "Buy CE — bullish momentum"
+    elif row["MACD"] < 0 and row["Bias"] == "PE":
+        return "Buy PE — bearish momentum"
+    else:
+        return "Wait — no clear edge"
+
 # -------------------------------
 # Data Processing
 # -------------------------------
@@ -84,6 +98,7 @@ def process_chain_data(chain_data):
     macd = MACD(close=df["CE LTP"])
     df["MACD"] = macd.macd_diff()
     df["Alert"] = df.apply(generate_alerts, axis=1)
+    df["Recommendation"] = df.apply(generate_recommendation, axis=1)
     return df
 
 # -------------------------------
@@ -112,6 +127,10 @@ try:
     st.subheader("⚠️ Strategy Alerts")
     alert_df = df[df["Alert"] != ""]
     st.dataframe(alert_df[["Strike", "Strategy", "Alert"]], use_container_width=True)
+
+    # Recommendations
+    st.subheader("📌 Strategy Recommendations")
+    st.dataframe(df[["Strike", "Strategy", "Recommendation"]], use_container_width=True)
 
 except Exception as e:
     st.error("Failed to fetch live data. Please try again later.")
