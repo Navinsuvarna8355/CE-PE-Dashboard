@@ -5,6 +5,7 @@ import requests
 import plotly.graph_objects as go
 from ta.momentum import RSIIndicator
 from ta.trend import MACD
+from datetime import datetime
 
 # -------------------------------
 # Streamlit Config
@@ -72,21 +73,20 @@ def generate_recommendation(row):
 def process_chain_data(chain_data):
     rows = []
     for item in chain_data:
-        if "CE" in item and "PE" in item:
-            ce = item["CE"]
-            pe = item["PE"]
-            strike = ce["strikePrice"]
-            ce_theta = ce.get("theta", 0)
-            pe_theta = pe.get("theta", 0)
-            ce_ltp = ce.get("lastPrice", 0)
-            pe_ltp = pe.get("lastPrice", 0)
-            rows.append({
-                "Strike": strike,
-                "CE LTP": ce_ltp,
-                "PE LTP": pe_ltp,
-                "CE Theta": ce_theta,
-                "PE Theta": pe_theta
-            })
+        ce = item.get("CE", {})
+        pe = item.get("PE", {})
+        strike = item.get("strikePrice", ce.get("strikePrice", pe.get("strikePrice", 0)))
+        ce_theta = ce.get("theta", 0)
+        pe_theta = pe.get("theta", 0)
+        ce_ltp = ce.get("lastPrice", 0)
+        pe_ltp = pe.get("lastPrice", 0)
+        rows.append({
+            "Strike": strike,
+            "CE LTP": ce_ltp,
+            "PE LTP": pe_ltp,
+            "CE Theta": ce_theta,
+            "PE Theta": pe_theta
+        })
     df = pd.DataFrame(rows)
     df["Bias"] = df.apply(lambda row: detect_decay(row["CE Theta"], row["PE Theta"]), axis=1)
     df["Strategy"] = df["Bias"].map({
@@ -113,6 +113,11 @@ refresh = st.sidebar.button("🔄 Refresh Now")
 try:
     chain_data = fetch_option_chain(symbol)
     df = process_chain_data(chain_data)
+
+    # Timestamp
+    timestamp = datetime.now().strftime("%A, %d %B %Y • %I:%M %p")
+    st.markdown(f"🕒 **Last Updated:** {timestamp}")
+
     st.subheader(f"📊 Live Option Chain – {symbol}")
     st.dataframe(df, use_container_width=True)
 
@@ -128,9 +133,10 @@ try:
     alert_df = df[df["Alert"] != ""]
     st.dataframe(alert_df[["Strike", "Strategy", "Alert"]], use_container_width=True)
 
-    # Recommendations Table
+    # Recommendations (Vertical Layout)
     st.subheader("📌 Strategy Recommendations")
-    st.dataframe(df[["Strike", "Strategy", "Recommendation"]], use_container_width=True)
+    for _, row in df.iterrows():
+        st.markdown(f"**Strike {row['Strike']}** — {row['Recommendation']}")
 
     # Styled Markdown Section
     st.markdown("""
