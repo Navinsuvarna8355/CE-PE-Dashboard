@@ -128,9 +128,23 @@ try:
     alert_df = df[df["Alert"] != ""]
     st.dataframe(alert_df[["Strike", "Strategy", "Alert"]], use_container_width=True)
 
-    # Recommendations
+    # Recommendations Table
     st.subheader("📌 Strategy Recommendations")
     st.dataframe(df[["Strike", "Strategy", "Recommendation"]], use_container_width=True)
+
+    # Styled Markdown Section
+    st.markdown("""
+    ### Trading Recommendations
+    <div style="background-color:#0F4C81;padding:10px;border-radius:8px;">
+    <span style="color:white;">These suggestions are based on decay bias. Always use additional analysis.</span>
+    </div>
+    <br>
+    #### Bullish Bias (Upside)
+    <span style="color:white;">Put options are decaying faster than calls. Consider bullish strategies:</span>
+    - Sell Put Options (Short Put)  
+    - Buy Call Options (Long Call)  
+    - Bull Call Spread
+    """, unsafe_allow_html=True)
 
 except Exception as e:
     st.error("Failed to fetch live data. Please try again later.")
